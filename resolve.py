@@ -23,7 +23,6 @@ def _merge(hosts: typing.List[str], paths: typing.List[str]) -> typing.List[str]
                 results.add(line.strip())
     return list(results)
 
-
 if __name__ == "__main__":
     import argparse
 
@@ -41,11 +40,15 @@ if __name__ == "__main__":
         "--qtypes", nargs="*", help="resolve query types", default=["A", "CNAME"]
     )
     parser.add_argument("--verbose", action="store_true", help="verbose")
-    parser.add_argument("--format", default="json", help="output format")
+    parser.add_argument("--output", default="stdout", help="output path")
     args = parser.parse_args()
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+
+    fp = None
+    if args.output != "stdout":
+        fp = open(args.output, "a")
 
     hosts = _merge(hosts=args.host, paths=args.hosts)
     nameservers = _merge(hosts=args.nameserver, paths=args.nameservers)
@@ -69,6 +72,7 @@ if __name__ == "__main__":
         except Exception as e:
             logging.error("{}: {!r}".format(host, e))
     loop.close()
+
     results: typing.List[typing.Dict] = []
     for host, futures in temp.items():
         for future in futures:
@@ -79,19 +83,14 @@ if __name__ == "__main__":
             except Exception as e:
                 logging.error("{}: {!r}".format(host, e))
                 continue
+
             if not isinstance(result, typing.Iterable):
                 result = [result]
             for r in result:
                 t = {"query": host}
                 for k in r.__slots__:
                     t[k] = getattr(r, k)
-                results.append(t)
-
-    keys = list(set([k for r in results for k in r.keys()]))
-    if args.format == "csv":
-        print(";".join(keys))
-    for line in results:
-        if args.format == "csv":
-            print(";".join([str(line[k]) if k in line else "" for k in keys]))
-        else:
-            print(json.dumps(line))
+                if fp:
+                    fp.write(json.dumps(t)+"\n")
+                # results.append(t)
+                print(t)

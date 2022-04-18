@@ -12,6 +12,7 @@ try:
     import aiofile
 except ImportError:
     print("python3 -m pip install aiohttp aiofile")
+    raise
 
 
 class Fetcher(object):

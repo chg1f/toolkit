@@ -5,7 +5,11 @@ import logging
 import asyncio
 import json
 
-import aiodns
+try:
+    import aiodns
+except ImportError:
+    print("python3 -m pip install aiodns")
+    raise
 
 
 logger = logging.getLogger()
@@ -33,8 +37,8 @@ async def _query(resolver: aiodns.DNSResolver, host: str, qtype: str):
         for t in temp:
             for k in t.__slots__:
                 if k not in result:
-                    result[k] = list() # type: ignore
-                result[k].append(getattr(t, k)) # type: ignore
+                    result[k] = list()  # type: ignore
+                result[k].append(getattr(t, k))  # type: ignore
     except asyncio.CancelledError:
         raise
     except aiodns.error.DNSError as e:
